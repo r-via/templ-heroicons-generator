@@ -1,18 +1,37 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-"""
-Generates a heroicons.templ file for a Go Templ project, optimized for production.
-
-Scans specified directories for .templ files, identifies Heroicons usage
-(e.g., @heroicons.Outline_bars_3), downloads and caches the corresponding SVG icons
-from the official repository, and creates a Go package file (heroicons.templ)
-containing Templ components with direct SVG elements. Supports all SVG elements
-(path, circle, rect, g, etc.) and includes caching (customizable location),
-dry-run mode, and customizable default classes. Generates output with { attrs... }
-and fixed class attribute. Avoids writing the output file if the content hasn't changed.
-Uses importlib.metadata for dependency checking (Python 3.8+).
-"""
+#!/usr/bin/python3
+#  __  __                                                           ____            ______                           ___      
+# /\ \/\ \                       __                                /\  _`\         /\__  _\                         /\_ \     
+# \ \ \_\ \     __   _ __   ___ /\_\    ___    ___     ___     ____\ \ \L\_\    ___\/_/\ \/    __    ___ ___   _____\//\ \    
+#  \ \  _  \  /'__`\/\`'__\/ __`\/\ \  /'___\ / __`\ /' _ `\  /',__\\ \ \L_L   / __`\ \ \ \  /'__`\/' __` __`\/\ '__`\\ \ \   
+#   \ \ \ \ \/\  __/\ \ \//\ \L\ \ \ \/\ \__//\ \L\ \/\ \/\ \/\__, `\\ \ \/, \/\ \L\ \ \ \ \/\  __//\ \/\ \/\ \ \ \L\ \\_\ \_ 
+#    \ \_\ \_\ \____\\ \_\\ \____/\ \_\ \____\ \____/\ \_\ \_\/\____/ \ \____/\ \____/  \ \_\ \____\ \_\ \_\ \_\ \ ,__//\____\
+#     \/_/\/_/\/____/ \/_/ \/___/  \/_/\/____/\/___/  \/_/\/_/\/___/   \/___/  \/___/    \/_/\/____/\/_/\/_/\/_/\ \ \/ \/____/
+#                                                                                                                \ \_\        
+#                                                                                                                 \/_/        
+#
+# Version 1.0.0 - 25 - 04 - 2025
+# Created by: Rémi Viau
+#
+# Changelog:
+# - Initial version: Implementation of Heroicons component generation for Go Templ projects.
+# - Added automatic detection and installation of Python dependencies (requests, jinja2).
+# - Included SVG caching and validation against the official Heroicons list.
+#
+# Script designed to generate a heroicons.templ file for Go Templ projects,
+# by scanning .templ files to identify Heroicons usage,
+# downloading the corresponding SVGs from the official repository,
+# and creating optimized Templ components for production.
+#
+# Run the script with: python3 generate_heroicons.py [options]
+#
+# Requirements:
+#   - Python 3.8 or higher
+#   - Internet access to download SVGs and the Heroicons list
+#   - Go Templ v0.2.513 or higher to use the generated file
+#   - Optional environment variable: GITHUB_TOKEN to avoid GitHub API rate limits
+#
 
 import sys
 import os
