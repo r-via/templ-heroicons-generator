@@ -1,5 +1,9 @@
 # Templ Heroicons Generator
 
+<p align="center">
+<img src="assets/imgs/logo.jpg" alt="Logo">
+</p>
+
 `templ-heroicons-generator` is a Python command-line tool that automates the creation of Go Templ components for [Heroicons](https://heroicons.com/), a collection of free, MIT-licensed SVG icons from the creators of Tailwind CSS.
 
 The tool performs the following key actions:
