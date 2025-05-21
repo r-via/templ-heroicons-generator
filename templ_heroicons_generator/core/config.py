@@ -43,5 +43,5 @@ REQUEST_TIMEOUT: int = 15
 # --- Icon Regex Pattern (Used by scanner.py) ---
 # This could also reside in scanner.py if it's solely used there,
 # but placing it here makes it a central piece of "configuration" for how icons are identified.
-ICON_USAGE_PATTERN: str = r'@heroicons\.([A-Z_a-z][a-zA-Z0-9_]+)\b'
+ICON_USAGE_PATTERN: str = r'@?heroicons\.([A-Z_a-z][a-zA-Z0-9_]+)\b'
 """Regex pattern to identify Heroicon usage in .templ files (e.g., @heroicons.Outline_bars_3)."""
