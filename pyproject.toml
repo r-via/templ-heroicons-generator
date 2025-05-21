@@ -1,43 +1,66 @@
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
-backend-path = ["."]
 
 [project]
 name = "templ-heroicons-generator"
-version = "0.1.0"
-authors = [
-  { name="R-Via" },
-]
-description = "Generates a heroicons.templ file for Go Templ projects, optimized for production by embedding SVG elements directly."
+version = "0.1.5" # Assurez-vous que c'est la version actuelle/désirée
+description = "Generates Go Templ components for Heroicons by scanning .templ files and fetching SVGs."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { file="LICENSE" }
-keywords = ["heroicons", "templ", "go", "golang", "codegen", "svg", "tailwind", "generator", "automation"]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development :: Code Generators",
-    "Topic :: Utilities",
-    "Environment :: Console",
-    "Operating System :: OS Independent",
+license = {text = "MIT"}
+authors = [
+  {name = "Rémi Viau", email = "remi.viau@gmail.com"},
 ]
 dependencies = [
-    "requests>=2.25.0",
-    "Jinja2>=3.0.0",
+  "requests>=2.25.0",
+  "jinja2>=3.0.0",
+]
+keywords = [
+    "templ",
+    "heroicons",
+    "go",
+    "golang",
+    "codegen",
+    "svg",
+    "frontend",
+    "developer tools",
+    "cli"
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Code Generators",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Text Processing",
 ]
 
 [project.urls]
-Homepage = "https://github.com/r-via/templ-heroicons-generator"
-Repository = "https://github.com/r-via/templ-heroicons-generator"
-Issues = "https://github.com/r-via/templ-heroicons-generator/issues"
+"Homepage" = "https://github.com/r-via/templ-heroicons-generator"
+"Repository" = "https://github.com/r-via/templ-heroicons-generator"
+"Bug Tracker" = "https://github.com/r-via/templ-heroicons-generator/issues"
 
 [project.scripts]
 templ-generate-heroicons = "templ_heroicons_generator.main:entry_point"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=6.0",
+  "black>=22.0",
+  "flake8>=4.0",
+  "mypy>=0.900",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["templ_heroicons_generator*"]
+exclude = ["tests*"]
