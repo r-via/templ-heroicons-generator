@@ -117,7 +117,7 @@ templ {{ icon_obj.component_name }}(attrs templ.Attributes) {
 		fill="currentColor"
 		viewBox="0 0 24 24"
 		{% endif %}
-        { attrs... }
+        {% raw %}{ attrs... }{% endraw %}
 		class="{{ default_svg_class }}"
 	>
 		{% for element in icon_obj.elements %}
@@ -128,7 +128,6 @@ templ {{ icon_obj.component_name }}(attrs templ.Attributes) {
 		/>
 		{% endfor %}
 	</svg>
-    }
 }
 {% endfor %}
 """
