@@ -99,7 +99,7 @@ templ {{ icon_obj.component_name }}(attrs templ.Attributes) {
 			{% endfor %}
 		/>
 		{% endfor %}
-	</svg}
+	</svg>
 }
 {% endfor %}
 """
