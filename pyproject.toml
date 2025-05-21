@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "templ-heroicons-generator"
-version = "0.1.5" # Assurez-vous que c'est la version actuelle/désirée
+version = "0.1.5"
 description = "Generates Go Templ components for Heroicons by scanning .templ files and fetching SVGs."
 readme = "README.md"
 requires-python = ">=3.8"
