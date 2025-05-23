@@ -7,7 +7,7 @@
 `templ-heroicons-generator` is a Python command-line tool that automates the creation of Go Templ components for [Heroicons](https://heroicons.com/), a collection of free, MIT-licensed SVG icons from the creators of Tailwind CSS.
 
 The tool performs the following key actions:
-1.  Recursively scans `.templ` files in your project to detect Heroicons usage (e.g., `@heroicons.Outline_check_circle`).
+1.  Recursively scans `.templ` and `.go` files (excluding `_templ.go` files) in your project to detect Heroicons usage (e.g., `@heroicons.Outline_check_circle`).
 2.  Downloads the corresponding optimized 24x24 SVGs from the official Heroicons GitHub repository (`tailwindlabs/heroicons/optimized/24/{style}`).
 3.  Caches these SVGs locally to avoid redundant downloads on subsequent runs.
 4.  Optionally validates detected icon names against the official list fetched from the GitHub API.

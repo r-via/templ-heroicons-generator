@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
         "--input-dir",
         "-i",
         default=".",
-        help="Root directory of the project containing .templ files to scan.",
+        help="Root directory of the project containing .templ or .go (excluding _templ.go) files to scan.",  # MODIFIED HELP TEXT
     )
     parser.add_argument(
         "--output-dir",
@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
         type=lambda x: str(x).lower() not in ["false", "0", "no"],
         default=True,
         help=(
-            "Exclude .templ files within the --output-dir from scanning. "
+            "Exclude source files (.templ, .go excluding _templ.go) within the --output-dir from scanning. "  # MODIFIED HELP TEXT
             "Use '--exclude-output false' to disable exclusion."
         ),
     )
@@ -117,7 +117,9 @@ def main():
             cache_dir=args.cache_dir, verbose=args.verbose, silent=args.silent
         )
 
-        if not valid_icons_list and args.verbose:
+        if (
+            not valid_icons_list and args.verbose
+        ):  # valid_icons_list can be an empty dict
             print(
                 "  Warning: Could not fetch or parse the list of available icons (and no valid cache). "
                 "Validation against the official list will be skipped.",
@@ -165,18 +167,34 @@ def main():
                     file=sys.stderr,
                 )
                 exit_code = 1
-            elif icons_to_generate and args.verbose:
+            elif (
+                icons_to_generate and args.verbose
+            ):  # Check icons_to_generate before printing
                 print(
                     f"  Proceeding with {len(valid_icons_data)} successfully processed icon(s).",
                     file=sys.stderr,
                 )
 
-        if exit_code == 0:
-            if args.verbose:
+        if exit_code == 0:  # Check exit_code before proceeding
+            # Only proceed if there are icons to generate or if it's a dry run (to show empty output)
+            # Or if user wants to generate an empty file if no icons were found (current behaviour)
+            # For now, let's keep the behaviour of generating an empty file if no icons are found,
+            # unless download_svgs failed catastrophically.
+            if (
+                args.verbose and not valid_icons_data and icons_to_generate
+            ):  # Log if we identified icons but failed to get data
+                print(
+                    "  Note: No valid icon data to generate package from, though icons were identified."
+                )
+            elif args.verbose and not icons_to_generate:
+                print("  No icons identified to generate the package from.")
+
+            if args.verbose:  # General message, even if valid_icons_data is empty
                 print("Generating Templ package...")
+
             generated_content = templ_builder.generate_heroicons_package(
                 output_dir=args.output_dir,
-                icons=valid_icons_data,
+                icons=valid_icons_data,  # Pass valid_icons_data which might be empty
                 force=args.force,
                 verbose=args.verbose,
                 silent=args.silent,
@@ -196,8 +214,10 @@ def main():
                     )
                     print(generated_content.strip())
                     print("--- End Dry Run ---")
-                else:
-                    print("\n--- Dry Run: No content was generated. ---")
+                else:  # This case should ideally not happen if generate_heroicons_package always returns string on dry_run
+                    print(
+                        "\n--- Dry Run: No content was generated (or an issue occurred). ---"
+                    )
         else:
             print(
                 "Skipping package generation due to previous errors.", file=sys.stderr
@@ -215,17 +235,16 @@ def main():
         if args.verbose:
             traceback.print_exc(file=sys.stderr)
         exit_code = 1
-    except FileNotFoundError as e:  # FileNotFoundError is a subclass of OSError
+    except FileNotFoundError as e:
         print(f"\nFile System Error: {e}", file=sys.stderr)
         if args.verbose:
             traceback.print_exc(file=sys.stderr)
         exit_code = 1
-    except OSError as e:  # Catches broader OS errors including IOError
+    except OSError as e:
         print(f"\nOS Error: {e}", file=sys.stderr)
         if args.verbose:
             traceback.print_exc(file=sys.stderr)
         exit_code = 1
-    # Removed redundant except IOError as it's covered by OSError
     except RuntimeError as e:
         print(f"\nRuntime Error: {e}", file=sys.stderr)
         if args.verbose:
@@ -239,7 +258,7 @@ def main():
         print("--- End Traceback ---", file=sys.stderr)
         exit_code = 1
     finally:
-        if not args.silent:
+        if not args.silent:  # Ensure this is not printed if silent is true
             if exit_code == 0:
                 print("Script finished successfully.")
             else:

@@ -18,8 +18,9 @@ def find_used_icons(
     valid_icons_list: Dict[str, List[str]],
 ) -> List[Icon]:
     """
-    Scans .templ files recursively in the input directory to find used Heroicons,
-    excluding the specified output directory if it falls within the input directory.
+    Scans .templ and .go (excluding _templ.go) files recursively in the input
+    directory to find used Heroicons, excluding the specified output directory
+    if it falls within the input directory.
 
     It identifies icon usages matching the configured pattern (typically
     "@heroicons.Style_icon_name"), validates them against the fetched list of known
@@ -27,9 +28,9 @@ def find_used_icons(
     If verbose mode is enabled (and not silent), it lists all files crawled.
 
     Args:
-        input_dir: The root directory of the project to scan for .templ files (resolved from CWD).
+        input_dir: The root directory of the project to scan for source files (resolved from CWD).
         output_dir_to_exclude: The output directory path (resolved from CWD) to exclude from scanning.
-        exclude_output_dir_files: If True, .templ files within `output_dir_to_exclude`
+        exclude_output_dir_files: If True, source files within `output_dir_to_exclude`
                                   will not be scanned.
         verbose: If True (and silent is False), prints detailed logs, including crawled files.
         silent: If True, suppresses all informational output except critical errors.
@@ -44,12 +45,7 @@ def find_used_icons(
     Raises:
         FileNotFoundError: If the `input_dir` does not exist or is not a directory.
     """
-    if not os.path.isdir(
-        input_dir
-    ):  # input_dir is already absolute if called from cli.py as os.path.abspath(args.input_dir)
-        # or it's resolved from CWD if passed directly.
-        # For robustness, ensure it's absolute here or before.
-        # Let's assume cli.py does not make it absolute, and resolve it here.
+    if not os.path.isdir(input_dir):
         input_dir_abs_path = os.path.abspath(input_dir)
         if not os.path.isdir(input_dir_abs_path):
             raise FileNotFoundError(
@@ -58,13 +54,11 @@ def find_used_icons(
     else:
         input_dir_abs_path = os.path.abspath(input_dir)
 
-    # output_dir_to_exclude is also resolved from CWD by making it absolute directly.
-    # This ensures it's independent of input_dir's path structure unless explicitly made relative to it by the user.
     abs_output_dir_to_exclude = os.path.abspath(output_dir_to_exclude)
 
     icon_pattern = re.compile(config.ICON_USAGE_PATTERN)
     found_icons_dict: Dict[str, Icon] = {}
-    templ_files_to_scan: List[str] = []
+    source_files_to_scan: List[str] = []  # Renamed from templ_files_to_scan
     all_crawled_files_count = 0
 
     verbose_level = 0
@@ -75,41 +69,32 @@ def find_used_icons(
         verbose_level = max(verbose_level, int(env_verbose_level_str))
 
     if verbose:
-        print(f"Scanning for .templ files in '{input_dir_abs_path}'...")
+        print(
+            f"Scanning for source files (.templ, .go excluding _templ.go) in '{input_dir_abs_path}'..."
+        )
         if exclude_output_dir_files:
-            # For clarity, show what abs_output_dir_to_exclude resolved to
             print(
                 f"  Excluding scans within output directory: '{abs_output_dir_to_exclude}' (if it's under input dir)"
             )
 
-    for root, dirs, files in os.walk(
-        input_dir_abs_path
-    ):  # Walk the absolute input path
-        current_abs_root = os.path.abspath(
-            root
-        )  # root from os.walk is already absolute if top is absolute
+    for root, dirs, files in os.walk(input_dir_abs_path):
+        current_abs_root = os.path.abspath(root)
 
         if verbose:
             try:
                 rel_current_root = os.path.relpath(current_abs_root, input_dir_abs_path)
             except ValueError:
                 rel_current_root = current_abs_root
-            # Handle case where rel_current_root is '.' for the top input_dir_abs_path itself
             print(
                 f"  Crawling directory: {rel_current_root if rel_current_root != '.' else input_dir_abs_path}"
             )
 
         if exclude_output_dir_files:
-            # Check if current_abs_root is identical to or a subdirectory of abs_output_dir_to_exclude
-            # This correctly handles cases where output_dir might be outside, inside, or identical to input_dir.
-            # We only care about exclusion if current_abs_root is *within* the scan path that started from input_dir_abs_path
-            # AND it matches the output directory.
             if (
                 current_abs_root == abs_output_dir_to_exclude
                 or current_abs_root.startswith(abs_output_dir_to_exclude + os.sep)
             ):
                 if verbose:
-                    # Path for logging should be relative to input_dir_abs_path for clarity
                     log_skipped_path = (
                         os.path.relpath(current_abs_root, input_dir_abs_path)
                         if current_abs_root.startswith(input_dir_abs_path)
@@ -129,56 +114,58 @@ def find_used_icons(
                     rel_file_path_crawl = file_path
                 print(f"    Found file: {rel_file_path_crawl}")
 
-            if file_name.endswith(".templ"):
-                # Ensure we are not adding files from an excluded output directory
-                # This is a secondary check, primarily handled by pruning `dirs`.
-                # This handles the case where output_dir_to_exclude is the input_dir itself.
+            # Modified condition to include .go files (excluding _templ.go)
+            is_templ_file = file_name.endswith(".templ")
+            is_go_file = file_name.endswith(".go") and not file_name.endswith(
+                "_templ.go"
+            )
+
+            if is_templ_file or is_go_file:
                 if exclude_output_dir_files and (
                     current_abs_root == abs_output_dir_to_exclude
                     or current_abs_root.startswith(abs_output_dir_to_exclude + os.sep)
                 ):
-                    # This file is in the root of the excluded dir, which wasn't pruned if it's the top dir.
-                    if verbose and file_name.endswith(".templ"):
+                    if verbose:
                         print(
-                            f"    Skipping .templ file in excluded output directory root: {os.path.relpath(file_path, input_dir_abs_path)}"
+                            f"    Skipping source file in excluded output directory root: {os.path.relpath(file_path, input_dir_abs_path)}"
                         )
                     continue
-                templ_files_to_scan.append(file_path)
+                source_files_to_scan.append(file_path)
 
-    if not templ_files_to_scan:
+    if not source_files_to_scan:
         if verbose:
             print(
-                f"No .templ files found to analyze in '{input_dir_abs_path}' (out of {all_crawled_files_count} files crawled, respecting exclusions)."
+                f"No source files (.templ, .go excluding _templ.go) found to analyze in '{input_dir_abs_path}' (out of {all_crawled_files_count} files crawled, respecting exclusions)."
             )
         elif not silent:
             print(
-                f"No .templ files found to analyze (scanned {all_crawled_files_count} files, respecting exclusions)."
+                f"No source files (.templ, .go excluding _templ.go) found to analyze (scanned {all_crawled_files_count} files, respecting exclusions)."
             )
         return []
 
     if verbose:
         print(
-            f"Analyzing {len(templ_files_to_scan)} .templ file(s) (from {input_dir_abs_path}, {all_crawled_files_count} files crawled total)..."
+            f"Analyzing {len(source_files_to_scan)} source file(s) (from {input_dir_abs_path}, {all_crawled_files_count} files crawled total)..."
         )
     elif not silent:
-        print(f"Analyzing {len(templ_files_to_scan)} .templ file(s)...")
+        print(f"Analyzing {len(source_files_to_scan)} source file(s)...")
 
     files_with_read_errors = 0
     total_references_found = 0
     unique_raw_names_found: Set[str] = set()
 
-    for file_path in templ_files_to_scan:
+    for file_path in source_files_to_scan:
         try:
             relative_file_path = os.path.relpath(file_path, input_dir_abs_path)
         except ValueError:
-            relative_file_path = (
-                file_path  # Should not happen if file_path is under input_dir_abs_path
-            )
+            relative_file_path = file_path
 
         if verbose:
-            print(f"  - Analyzing .templ file: {relative_file_path}")
+            print(f"  - Analyzing source file: {relative_file_path}")  # Updated message
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(
+                file_path, "r", encoding="utf-8", errors="replace"
+            ) as f:  # Added errors='replace' for robustness
                 content = f.read()
 
             matches = icon_pattern.findall(content)
@@ -198,7 +185,7 @@ def find_used_icons(
                     svg_file_name, style, go_component_name = icon_details
 
                     is_known_icon = True
-                    if valid_icons_list:
+                    if valid_icons_list:  # Check if validation list is available
                         if style in valid_icons_list:
                             if svg_file_name not in valid_icons_list[style]:
                                 is_known_icon = False
@@ -208,7 +195,7 @@ def find_used_icons(
                                         f"resolved to '{svg_file_name}.svg' ({style}), which is not a known icon. Skipping.",
                                         file=sys.stderr,
                                     )
-                        else:
+                        else:  # Style itself not in keys of valid_icons_list (e.g., 'outline', 'solid')
                             is_known_icon = False
                             if verbose:
                                 print(
@@ -216,6 +203,7 @@ def find_used_icons(
                                     f"not found in fetched icon lists (available styles: {list(valid_icons_list.keys())}). Skipping.",
                                     file=sys.stderr,
                                 )
+                    # If valid_icons_list is empty (e.g., API fetch failed and no cache), is_known_icon remains True (skip validation)
 
                     if is_known_icon:
                         found_icons_dict[raw_component_name] = Icon(
@@ -232,7 +220,7 @@ def find_used_icons(
                         file=sys.stderr,
                     )
 
-        except FileNotFoundError:  # Should be rare due to os.walk
+        except FileNotFoundError:
             if verbose:
                 print(
                     f"  Error: File not found during analysis {relative_file_path}. It might have been moved or deleted.",
@@ -275,12 +263,10 @@ def find_used_icons(
                     print(
                         f"    - {icon.component_name} (Style: {icon.style}, File: {icon.file_name}.svg)"
                     )
-        elif (
-            templ_files_to_scan or all_crawled_files_count > 0
-        ):  # Check if any files were scanned or crawled
+        elif source_files_to_scan or all_crawled_files_count > 0:
             print(
                 f"No valid Heroicons usage matching the format '@heroicons.Style_icon_name' found "
-                f"in the scanned .templ files (Total raw references: {total_references_found}, "
+                f"in the scanned source files (Total raw references: {total_references_found}, "
                 f"Unique raw references: {total_unique_raw_refs})."
             )
 
@@ -292,8 +278,10 @@ def find_used_icons(
     elif (
         not silent
         and not final_icons_list
-        and (templ_files_to_scan or all_crawled_files_count > 0)
+        and (source_files_to_scan or all_crawled_files_count > 0)
     ):
-        print(f"No valid Heroicons usage found in analyzed .templ file(s).")
+        print(
+            f"No valid Heroicons usage found in analyzed source file(s)."
+        )  # Updated message
 
     return final_icons_list
