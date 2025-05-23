@@ -60,11 +60,11 @@ It's recommended to install `templ-heroicons-generator` within a Python virtual 
     This command will download the package, build it if necessary, and install it along with its Python dependencies (`requests` and `jinja2`) into your active Python environment.
 
 3.  **Verify the installation:**
-    The command-line tool `templ-generate-heroicons` should now be available in your PATH (if your Python scripts directory is in PATH).
+    The command-line tool `templ-heroicons-generator` should now be available in your PATH (if your Python scripts directory is in PATH).
     ```bash
-    templ-generate-heroicons --version
+    templ-heroicons-generator --version
     # or to see all options:
-    templ-generate-heroicons --help
+    templ-heroicons-generator --help
     ```
 
 **(For developing `templ-heroicons-generator` itself):**
@@ -77,10 +77,10 @@ pip install -e .
 
 ## Usage
 
-After installation, run the `templ-generate-heroicons` command. It's typically run from the root of your Go project.
+After installation, run the `templ-heroicons-generator` command. It's typically run from the root of your Go project.
 
 ```bash
-templ-generate-heroicons [OPTIONS]
+templ-heroicons-generator [OPTIONS]
 ```
 
 ### Command-Line Options
@@ -100,22 +100,22 @@ templ-generate-heroicons [OPTIONS]
 
 -   **Generate icons (scan current directory, output to default location):**
     ```bash
-    templ-generate-heroicons
+    templ-heroicons-generator
     ```
 
 -   **Specify input and output directories, and enable verbose logging:**
     ```bash
-    templ-generate-heroicons --input-dir ./cmd/web/views --output-dir ./internal/web/components/heroicons --verbose
+    templ-heroicons-generator --input-dir ./cmd/web/views --output-dir ./internal/web/components/heroicons --verbose
     ```
 
 -   **Preview output without writing to disk (dry run):**
     ```bash
-    templ-generate-heroicons --dry-run
+    templ-heroicons-generator --dry-run
     ```
 
 -   **Force overwrite the output file and use a custom default SVG class:**
     ```bash
-    templ-generate-heroicons --force --default-class "icon w-6 h-6"
+    templ-heroicons-generator --force --default-class "icon w-6 h-6"
     ```
 
 ### Environment Variables
@@ -123,7 +123,7 @@ templ-generate-heroicons [OPTIONS]
 -   **`GITHUB_TOKEN`**: (Optional) Your GitHub Personal Access Token. If this environment variable is set, the tool will use it for authenticated requests to the GitHub API when fetching the list of available Heroicons. This helps avoid rate limits, especially in CI/CD environments or for frequent use.
     ```bash
     export GITHUB_TOKEN="ghp_yourgithubtokenhere"
-    templ-generate-heroicons
+    templ-heroicons-generator
     ```
 
 ## Generated Output (`heroicons.templ`)
@@ -174,9 +174,9 @@ templ Outline_Trash(attrs templ.Attributes) {
 
 ## Integration with Your Go Templ Project
 
-1.  **Generate the Icons**: Run `templ-generate-heroicons` with appropriate options for your project structure. For instance:
+1.  **Generate the Icons**: Run `templ-heroicons-generator` with appropriate options for your project structure. For instance:
     ```bash
-    templ-generate-heroicons -o ./views/components/heroicons
+    templ-heroicons-generator -o ./views/components/heroicons
     ```
     This would create `./views/components/heroicons/heroicons.templ` with package name `heroicons`.
 
@@ -589,7 +589,7 @@ The icons are organized by common UI categories to help you find what you need. 
 
     icons:
         @echo "Generating Heroicons Templ components..."
-        templ-generate-heroicons -i $(TEMPL_SOURCE_DIR) -o $(HEROICONS_OUTPUT_DIR) --cache-dir $(CACHE_DIR)
+        templ-heroicons-generator -i $(TEMPL_SOURCE_DIR) -o $(HEROICONS_OUTPUT_DIR) --cache-dir $(CACHE_DIR)
 
     templ-generate: icons
         @echo "Compiling Templ files..."
@@ -609,7 +609,7 @@ The icons are organized by common UI categories to help you find what you need. 
 
 ## Troubleshooting
 
--   **Command not found: `templ-generate-heroicons`**:
+-   **Command not found: `templ-heroicons-generator`**:
     -   Ensure the package was installed correctly via `pip`.
     -   Verify that the Python environment where you installed the package is active.
     -   Check if the `scripts` or `bin` directory of your Python environment is in your system's `PATH`.

@@ -50,7 +50,7 @@ classifiers = [
 "Bug Tracker" = "https://github.com/r-via/templ-heroicons-generator/issues"
 
 [project.scripts]
-templ-generate-heroicons = "templ_heroicons_generator.main:entry_point"
+templ-heroicons-generator = "templ_heroicons_generator.main:entry_point"
 
 [project.optional-dependencies]
 dev = [
