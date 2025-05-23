@@ -1,0 +1,7 @@
+path: .
+extensions: [.py, .go, .md]
+output: templ-heroicons-generator
+packages: []
+exclude: []
+exclude_files: []
+gitignore: .gitignore
