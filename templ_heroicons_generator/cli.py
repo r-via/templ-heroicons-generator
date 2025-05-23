@@ -3,13 +3,13 @@
 import argparse
 import sys
 import os
-import requests  # For requests.exceptions.RequestException in the top-level try-except
-import traceback  # For verbose error reporting
+import requests
+import traceback
 
 from .core import scanner
 from .core import downloader
 from .core import templ_builder
-from .core import config  # For default values for argparse and other constants
+from .core import config
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,7 +57,6 @@ def parse_args() -> argparse.Namespace:
         ),
     )
 
-    # Verbosity and Silent group
     verbosity_group = parser.add_mutually_exclusive_group()
     verbosity_group.add_argument(
         "--verbose",
@@ -85,11 +84,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cache-dir",
         default=config.DEFAULT_CACHE_DIR,
-        help="Directory to store cached SVG files.",
+        help="Directory to store cached SVG files and the icon list.",
     )
     args = parser.parse_args()
 
-    # If silent is true, verbose must be false, regardless of user input for verbose
     if args.silent:
         args.verbose = False
 
@@ -100,46 +98,40 @@ def main():
     """
     Main function for the Command Line Interface.
 
-    This function orchestrates the entire process of generating Heroicons Templ components:
-    1. Parses command-line arguments.
-    2. Fetches the list of available Heroicons for validation.
-    3. Scans project files to find used icons.
-    4. Downloads and caches SVG data for these icons.
+    Orchestrates the Heroicons Templ component generation process:
+    1. Parses arguments.
+    2. Fetches (or loads from cache) the list of available Heroicons.
+    3. Scans project files for icon usage.
+    4. Downloads and caches SVGs for used icons.
     5. Generates the .templ Go package file.
-    It also handles top-level error catching and program exit codes.
+    Includes top-level error handling and program exit codes.
     """
     args = parse_args()
     exit_code = 0
 
     try:
-        if args.verbose:  # This implies not args.silent
+        if args.verbose:
             print("Verbose mode enabled.")
-            # print(f"Script arguments: {vars(args)}") # Uncomment for deep debugging
-
-        if not args.silent:
-            print("Fetching available Heroicons list from GitHub API...")
 
         valid_icons_list = downloader.fetch_heroicons_list(
-            verbose=args.verbose,  # Pass verbose (which is false if silent is true)
-            silent=args.silent,
+            cache_dir=args.cache_dir, verbose=args.verbose, silent=args.silent
         )
-        if not valid_icons_list and args.verbose:  # verbose implies not silent
+
+        if not valid_icons_list and args.verbose:
             print(
-                "  Warning: Could not fetch or parse the list of available icons. "
+                "  Warning: Could not fetch or parse the list of available icons (and no valid cache). "
                 "Validation against the official list will be skipped.",
                 file=sys.stderr,
             )
-        elif valid_icons_list and args.verbose:  # verbose implies not silent
-            print("  Icon list fetched successfully.")
 
         if args.verbose:
-            print("Scanning project for icon usage...")  # verbose implies not silent
+            print("Scanning project for icon usage...")
         icons_to_generate = scanner.find_used_icons(
             input_dir=args.input_dir,
             output_dir_to_exclude=args.output_dir,
             exclude_output_dir_files=args.exclude_output,
-            verbose=args.verbose,  # Pass verbose
-            silent=args.silent,  # Pass silent
+            verbose=args.verbose,
+            silent=args.silent,
             valid_icons_list=valid_icons_list,
         )
 
@@ -148,22 +140,21 @@ def main():
                 "No icons found in project files matching the required format, or none were valid."
             )
 
-        if args.verbose and icons_to_generate:  # verbose implies not silent
+        if args.verbose and icons_to_generate:
             print(
                 f"Preparing to download/cache SVGs for {len(icons_to_generate)} icon(s)..."
             )
-        elif args.verbose and not icons_to_generate:  # verbose implies not silent
+        elif args.verbose and not icons_to_generate:
             print("No icons to download/cache.")
 
         valid_icons_data, download_errors = downloader.download_svgs(
             icons_to_process=icons_to_generate,
-            verbose=args.verbose,  # Pass verbose
-            silent=args.silent,  # Pass silent
+            verbose=args.verbose,
+            silent=args.silent,
             cache_dir=args.cache_dir,
         )
 
         if download_errors > 0:
-            # Errors should always be printed, even if silent
             print(
                 f"\nWarning: Encountered {download_errors} error(s) during SVG download/processing.",
                 file=sys.stderr,
@@ -174,7 +165,7 @@ def main():
                     file=sys.stderr,
                 )
                 exit_code = 1
-            elif icons_to_generate and args.verbose:  # verbose implies not silent
+            elif icons_to_generate and args.verbose:
                 print(
                     f"  Proceeding with {len(valid_icons_data)} successfully processed icon(s).",
                     file=sys.stderr,
@@ -182,13 +173,13 @@ def main():
 
         if exit_code == 0:
             if args.verbose:
-                print("Generating Templ package...")  # verbose implies not silent
+                print("Generating Templ package...")
             generated_content = templ_builder.generate_heroicons_package(
                 output_dir=args.output_dir,
                 icons=valid_icons_data,
                 force=args.force,
-                verbose=args.verbose,  # Pass verbose
-                silent=args.silent,  # Pass silent
+                verbose=args.verbose,
+                silent=args.silent,
                 dry_run=args.dry_run,
                 default_class=args.default_class,
             )
@@ -200,15 +191,14 @@ def main():
                         rel_target_path = os.path.relpath(target_path)
                     except ValueError:
                         rel_target_path = target_path
-                    # Dry run output should appear even if silent, as it's the primary purpose of the flag
                     print(
                         f"\n--- Dry Run: Content that would be written to {rel_target_path} ---"
                     )
                     print(generated_content.strip())
                     print("--- End Dry Run ---")
-                else:  # Dry run output
+                else:
                     print("\n--- Dry Run: No content was generated. ---")
-        else:  # Errors occurred
+        else:
             print(
                 "Skipping package generation due to previous errors.", file=sys.stderr
             )
@@ -222,36 +212,30 @@ def main():
         print(
             f"\nNetwork Error: A critical network error occurred: {e}", file=sys.stderr
         )
-        if args.verbose:  # verbose implies not silent for traceback
+        if args.verbose:
             traceback.print_exc(file=sys.stderr)
         exit_code = 1
-    except FileNotFoundError as e:
+    except FileNotFoundError as e:  # FileNotFoundError is a subclass of OSError
         print(f"\nFile System Error: {e}", file=sys.stderr)
-        if args.verbose:  # verbose implies not silent
+        if args.verbose:
             traceback.print_exc(file=sys.stderr)
         exit_code = 1
-    except OSError as e:
+    except OSError as e:  # Catches broader OS errors including IOError
         print(f"\nOS Error: {e}", file=sys.stderr)
-        if args.verbose:  # verbose implies not silent
+        if args.verbose:
             traceback.print_exc(file=sys.stderr)
         exit_code = 1
-    except IOError as e:
-        print(f"\nI/O Error: {e}", file=sys.stderr)
-        if args.verbose:  # verbose implies not silent
-            traceback.print_exc(file=sys.stderr)
-        exit_code = 1
+    # Removed redundant except IOError as it's covered by OSError
     except RuntimeError as e:
         print(f"\nRuntime Error: {e}", file=sys.stderr)
-        if args.verbose:  # verbose implies not silent
+        if args.verbose:
             traceback.print_exc(file=sys.stderr)
         exit_code = 1
     except Exception as e:
         print(f"\n--- Unexpected Error ---", file=sys.stderr)
         print(f"An unhandled error occurred: {e}", file=sys.stderr)
         print("\n--- Traceback ---", file=sys.stderr)
-        traceback.print_exc(
-            file=sys.stderr
-        )  # Always print traceback for unexpected errors
+        traceback.print_exc(file=sys.stderr)
         print("--- End Traceback ---", file=sys.stderr)
         exit_code = 1
     finally:
